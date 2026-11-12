@@ -60,6 +60,43 @@ jobs:
 
           echo "ANDROID_HOME=$ANDROID_SDK_ROOT" >> "$GITHUB_ENV"
 
+
+      - name: Configure Godot Android paths
+        shell: bash
+        run: |
+          set -e
+          mkdir -p "$HOME/.config/godot"
+          SETTINGS="$HOME/.config/godot/editor_settings-4.tres"
+
+          if [ ! -f "$SETTINGS" ]; then
+            printf '[gd_resource type="EditorSettings" format=3]\n\n[resource]\n' > "$SETTINGS"
+          fi
+
+          python3 - <<'PY'
+          import os
+          from pathlib import Path
+
+          p = Path.home() / ".config/godot/editor_settings-4.tres"
+          text = p.read_text()
+          sdk = os.environ["ANDROID_SDK_ROOT"]
+          java = os.environ["JAVA_HOME"]
+
+          entries = {
+              "export/android/android_sdk_path": sdk,
+              "export/android/java_sdk_path": java,
+          }
+
+          for key, value in entries.items():
+              lines = [
+                  line for line in text.splitlines()
+                  if not line.startswith(key + " =")
+              ]
+              text = "\n".join(lines) + "\n"
+              text += f'{key} = "{value}"\n'
+
+          p.write_text(text)
+          PY
+
       - name: Import Godot resources
         run: godot --headless --path . --editor --import --quit
 
