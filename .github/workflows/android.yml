@@ -63,14 +63,14 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          godot --headless --path . --script res://tests/smoke.gd
+          timeout --signal=TERM --kill-after=5s 90s godot --headless --path . --script res://tests/smoke.gd
 
       - name: Capture actual rendered menu and arena
         shell: bash
         run: |
           set -euo pipefail
           mkdir -p build/screenshots
-          xvfb-run -a godot --path . --script res://tests/visual.gd
+          timeout --signal=TERM --kill-after=5s 90s xvfb-run -a godot --path . --script res://tests/visual.gd
           test -s build/screenshots/menu.png
           test -s build/screenshots/arena.png
 
