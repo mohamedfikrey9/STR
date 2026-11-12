@@ -66,7 +66,7 @@ jobs:
           python3 - <<'PY'
           import os
           from pathlib import Path
-          settings = Path.home() / '.config/godot/editor_settings-4.tres'
+          settings = Path.home() / '.config/godot/editor_settings-4.4.tres'
           settings.parent.mkdir(parents=True, exist_ok=True)
           if settings.exists():
               content = settings.read_text()
@@ -103,6 +103,18 @@ jobs:
           p.write_text(s)
           PY
           godot --headless --path . --editor --quit
+
+      - name: Diagnose Android export configuration
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo "Godot settings:"
+          ls -la "$HOME/.config/godot"/editor_settings* || true
+          grep -E 'export/android/(android_sdk_path|java_sdk_path)' "$HOME/.config/godot/editor_settings-4.4.tres" || true
+          echo "Installed SDK packages:"
+          ls -ld "$ANDROID_SDK_ROOT/platforms/android-35" "$ANDROID_SDK_ROOT/build-tools/35.0.0"
+          echo "Export templates:"
+          find "$HOME/.local/share/godot/export_templates" -maxdepth 2 -type f -name 'android_debug.apk' -print || true
 
       - name: Validate Android export preset
         shell: bash
