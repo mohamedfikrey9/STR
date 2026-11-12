@@ -15,7 +15,7 @@ func _run_tests() -> void:
     if game.mode != "play" or game.players.size() != 1:
         _fail("Solo practice did not start")
         return
-    var id: int = game.multiplayer.get_unique_id()
+    var id: int = 1
     if not game.players.has(id):
         _fail("Local player missing")
         return
