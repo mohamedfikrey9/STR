@@ -344,7 +344,9 @@ func _action(action: String) -> void:
         _steal(multiplayer.get_unique_id())
 
 func _input(event: InputEvent) -> void:
-    var canvas_pos := get_global_transform_with_canvas().affine_inverse() * event.position if event is InputEventScreenTouch or event is InputEventScreenDrag or event is InputEventMouseButton or event is InputEventMouseMotion else Vector2.ZERO
+    var canvas_pos: Vector2 = Vector2.ZERO
+    if event is InputEventScreenTouch or event is InputEventScreenDrag or event is InputEventMouseButton or event is InputEventMouseMotion:
+        canvas_pos = get_global_transform_with_canvas().affine_inverse() * event.position
     if event is InputEventKey and event.pressed and not event.echo:
         if editing_ip:
             if event.keycode == KEY_ENTER:
