@@ -65,6 +65,23 @@ jobs:
           set -euo pipefail
           godot --headless --path . --script res://tests/smoke.gd
 
+      - name: Capture actual rendered menu and arena
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p build/screenshots
+          xvfb-run -a godot --path . --script res://tests/visual.gd
+          test -s build/screenshots/menu.png
+          test -s build/screenshots/arena.png
+
+      - name: Upload visual test screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: StealTheRule-Visual-Test
+          path: build/screenshots/
+          if-no-files-found: warn
+
       - name: Configure Godot Android SDK paths
         shell: bash
         run: |
