@@ -8,9 +8,11 @@ config/features=PackedStringArray("4.4", "GL Compatibility")
 [display]
 window/size/viewport_width=1280
 window/size/viewport_height=720
-window/stretch/mode="canvas_items"
-window/stretch/aspect="expand"
+window/stretch/mode="viewport"
+window/stretch/aspect="keep"
 window/handheld/orientation=0
+window/handheld/immersive_mode=true
+window/size/resizable=true
 
 [rendering]
 renderer/rendering_method="gl_compatibility"
