@@ -92,7 +92,7 @@ func _simulate(delta: float) -> void:
     for id in players.keys():
         var p: Dictionary = players[id]
         var direction: Vector2 = inputs.get(id, Vector2.ZERO)
-        if int(id) == multiplayer.get_unique_id():
+        if int(id) == _local_player_id():
             direction = held_direction
         if active_rule == 0 and int(id) != rule_owner:
             direction = -direction
@@ -178,6 +178,11 @@ func _disconnect_peer() -> void:
     if multiplayer.has_multiplayer_peer():
         multiplayer.multiplayer_peer.close()
     multiplayer.multiplayer_peer = null
+
+func _local_player_id() -> int:
+    if not multiplayer.has_multiplayer_peer():
+        return 1
+    return multiplayer.get_unique_id()
 
 func _practice() -> void:
     _disconnect_peer()
@@ -339,9 +344,9 @@ func _action(action: String) -> void:
     if multiplayer.has_multiplayer_peer() and not multiplayer.is_server():
         request_action.rpc_id(1, action)
     elif action == "law":
-        _activate_law(multiplayer.get_unique_id())
+        _activate_law(_local_player_id())
     elif action == "steal":
-        _steal(multiplayer.get_unique_id())
+        _steal(_local_player_id())
 
 func _input(event: InputEvent) -> void:
     var canvas_pos: Vector2 = Vector2.ZERO
@@ -512,7 +517,7 @@ func _draw_hud() -> void:
     draw_circle(stick_pos + held_direction * 46.0 + Vector2(-11, -12), 14, Color("#a3f4ff"))
     _action_disc(Vector2(1150, 560), 73, Color("#eeb64a"), "LAW")
     _action_disc(Vector2(1150, 395), 62, Color("#ed5b88"), "STEAL")
-    var my_id := multiplayer.get_unique_id()
+    var my_id := _local_player_id()
     if players.has(my_id):
         var held: int = players[my_id]["held"]
         _text("CARD: " + (RULE_NAMES[held] if held >= 0 else "NONE"), Vector2(260, 674), 21, Color("#ffe5a1"))
