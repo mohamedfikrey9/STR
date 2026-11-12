@@ -42,7 +42,9 @@ func _ready() -> void:
     multiplayer.connected_to_server.connect(_connected)
     multiplayer.connection_failed.connect(_connection_failed)
     multiplayer.server_disconnected.connect(_server_left)
-    get_window().min_size = Vector2i(960, 540)
+    # Keep Android landscape and avoid desktop minimum-size constraints.
+    if not OS.has_feature("mobile"):
+        get_window().min_size = Vector2i(960, 540)
     ip_edit = LineEdit.new()
     ip_edit.position = Vector2(470, 537)
     ip_edit.size = Vector2(340, 42)
@@ -355,7 +357,7 @@ func _input(event: InputEvent) -> void:
             held_direction = Vector2.ZERO
     if event is InputEventScreenDrag and event.index == stick_pointer:
         held_direction = (event.position - stick_pos).limit_length(70.0) / 70.0
-    if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT:
+    if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT and not OS.has_feature("mobile"):
         if event.pressed:
             _touch_down(event.position, -2)
             mouse_stick = stick_pointer == -2
@@ -364,7 +366,7 @@ func _input(event: InputEvent) -> void:
             if stick_pointer == -2:
                 stick_pointer = -1
                 held_direction = Vector2.ZERO
-    if event is InputEventMouseMotion and mouse_stick:
+    if event is InputEventMouseMotion and mouse_stick and not OS.has_feature("mobile"):
         held_direction = (event.position - stick_pos).limit_length(70.0) / 70.0
 
 func _touch_down(pos: Vector2, index: int) -> void:
