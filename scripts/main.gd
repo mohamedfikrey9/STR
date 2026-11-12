@@ -34,6 +34,8 @@ var stick_pos := Vector2(133, 567)
 var mouse_stick := false
 var last_winner := ""
 var random := RandomNumberGenerator.new()
+var visual_time := 0.0
+var touch_debug := ""
 
 func _ready() -> void:
     random.randomize()
@@ -55,6 +57,7 @@ func _ready() -> void:
     queue_redraw()
 
 func _process(delta: float) -> void:
+    visual_time += delta
     if mode == "play":
         if multiplayer.is_server() or multiplayer.multiplayer_peer == null:
             _simulate(delta)
@@ -370,6 +373,7 @@ func _input(event: InputEvent) -> void:
         held_direction = (event.position - stick_pos).limit_length(70.0) / 70.0
 
 func _touch_down(pos: Vector2, index: int) -> void:
+    touch_debug = "Touch %d at %d,%d" % [index, int(pos.x), int(pos.y)]
     if mode == "menu":
         if Rect2(450, 250, 380, 72).has_point(pos):
             _practice()
@@ -410,89 +414,130 @@ func _physics_process(_delta: float) -> void:
     held_direction = Input.get_vector("ui_left", "ui_right", "ui_up", "ui_down")
 
 func _draw() -> void:
-    draw_rect(Rect2(0, 0, 1280, 720), Color("10172e"))
+    draw_rect(Rect2(0, 0, 1280, 720), Color("#080e20"))
+    for i in range(20):
+        var x := float(i * 131 % 1280)
+        var y := float(i * 89 % 720)
+        draw_circle(Vector2(x, y), 2.0 + sin(visual_time + float(i)) * 0.8, Color("#253e6d"))
     if mode == "menu":
-        _text("STEAL THE RULE", Vector2(640, 145), 56, Color("ffe17a"), HORIZONTAL_ALIGNMENT_CENTER, 750)
-        _text("2D TOP-DOWN PARTY ARENA", Vector2(640, 198), 24, Color("b6c9e8"), HORIZONTAL_ALIGNMENT_CENTER, 700)
-        _button(Rect2(450, 250, 380, 72), "SOLO PRACTICE", Color("287bc5"))
-        _button(Rect2(450, 340, 380, 72), "HOST LAN / INTERNET", Color("2d9a72"))
-        _button(Rect2(450, 430, 380, 72), "JOIN BY IP", Color("935bc5"))
-        _button(Rect2(450, 525, 380, 60), "IP: " + online_ip, Color("394562"))
-        _text(status, Vector2(640, 630), 18, Color("d2d8e8"), HORIZONTAL_ALIGNMENT_CENTER, 1100)
+        _panel(Rect2(365, 58, 550, 610), Color("#111e3a"))
+        _text("STEAL THE RULE", Vector2(640, 148), 52, Color("#ffe69b"), HORIZONTAL_ALIGNMENT_CENTER, 550)
+        _text("NEON ARENA  •  MOBILE EDITION", Vector2(640, 195), 20, Color("#8edaff"), HORIZONTAL_ALIGNMENT_CENTER, 540)
+        _button(Rect2(450, 250, 380, 72), "SOLO PRACTICE", Color("#1c9eae"))
+        _button(Rect2(450, 340, 380, 72), "HOST MULTIPLAYER", Color("#3474ce"))
+        _button(Rect2(450, 430, 380, 72), "JOIN BY IP", Color("#8351c5"))
+        _button(Rect2(450, 525, 380, 60), "IP: " + online_ip, Color("#394562"))
+        _text(status, Vector2(640, 634), 17, Color("#d2e5f9"), HORIZONTAL_ALIGNMENT_CENTER, 1050)
         return
     if mode == "lobby":
-        _text("WAITING ROOM", Vector2(640, 145), 46, Color("ffe17a"), HORIZONTAL_ALIGNMENT_CENTER, 800)
+        _panel(Rect2(345, 70, 590, 560), Color("#121e3a"))
+        _text("PLAYER LOBBY", Vector2(640, 145), 46, Color("#ffe69b"), HORIZONTAL_ALIGNMENT_CENTER, 800)
         _text("PLAYERS: %d / 4" % players.size(), Vector2(640, 230), 30, Color.WHITE, HORIZONTAL_ALIGNMENT_CENTER, 700)
         for id in players.keys():
             var p: Dictionary = players[id]
             var slot: int = p["slot"]
-            draw_circle(Vector2(485 + slot * 100, 320), 29, COLORS[slot])
-            _text("P%d" % (slot + 1), Vector2(485 + slot * 100, 327), 18, Color.WHITE, HORIZONTAL_ALIGNMENT_CENTER, 60)
+            _avatar(Vector2(485 + slot * 100, 325), COLORS[slot], slot, 1.1)
         if multiplayer.is_server():
-            _button(Rect2(450, 450, 380, 72), "START (2-4 PLAYERS)", Color("298e68"))
-        _button(Rect2(30, 640, 170, 55), "BACK", Color("47516a"))
-        _text(status, Vector2(640, 580), 18, Color("d0dbec"), HORIZONTAL_ALIGNMENT_CENTER, 1200)
+            _button(Rect2(450, 450, 380, 72), "START MATCH", Color("#249c80"))
+        _button(Rect2(30, 640, 170, 55), "BACK", Color("#47516a"))
+        _text(status, Vector2(640, 580), 18, Color("#d0dbec"), HORIZONTAL_ALIGNMENT_CENTER, 1200)
         return
     _draw_arena()
     _draw_hud()
     if mode == "end":
-        draw_rect(Rect2(280, 225, 720, 320), Color(0.07, 0.10, 0.20, 0.96))
-        _text("ROUND FINISHED", Vector2(640, 320), 42, Color("ffe17a"), HORIZONTAL_ALIGNMENT_CENTER, 680)
+        _panel(Rect2(280, 215, 720, 330), Color("#101b36"))
+        _text("ROUND FINISHED", Vector2(640, 320), 42, Color("#ffe17a"), HORIZONTAL_ALIGNMENT_CENTER, 680)
         _text(last_winner, Vector2(640, 385), 26, Color.WHITE, HORIZONTAL_ALIGNMENT_CENTER, 680)
-        _button(Rect2(440, 460, 400, 80), "PLAY AGAIN (HOST)", Color("327db5"))
+        _button(Rect2(440, 460, 400, 80), "PLAY AGAIN", Color("#327db5"))
+
+func _panel(rect: Rect2, tint: Color) -> void:
+    draw_rect(Rect2(rect.position + Vector2(6, 9), rect.size), Color(0, 0, 0, 0.38))
+    draw_rect(rect, tint)
+    draw_rect(Rect2(rect.position, Vector2(rect.size.x, 5)), tint.lightened(0.42))
+    draw_rect(rect, Color("#3b789d"), false, 2.0)
+
+func _avatar(pos: Vector2, tint: Color, slot: int, scale_factor: float = 1.0) -> void:
+    var bob := sin(visual_time * 3.5 + float(slot)) * 2.5
+    var p := pos + Vector2(0, bob)
+    draw_ellipse_placeholder(p + Vector2(0, 23) * scale_factor, 27.0 * scale_factor, 10.0 * scale_factor, Color(0, 0, 0, 0.5))
+    draw_circle(p + Vector2(0, 7) * scale_factor, 24.0 * scale_factor, tint.darkened(0.6))
+    draw_circle(p, 24.0 * scale_factor, tint)
+    draw_circle(p + Vector2(-7, -9) * scale_factor, 14.0 * scale_factor, tint.lightened(0.52))
+    draw_rect(Rect2(p + Vector2(-17, -4) * scale_factor, Vector2(34, 13) * scale_factor), Color("#12253d"))
+    draw_rect(Rect2(p + Vector2(-12, -2) * scale_factor, Vector2(24, 8) * scale_factor), Color("#9ffaff"))
+    draw_circle(p + Vector2(10, -14) * scale_factor, 3.5 * scale_factor, Color.WHITE)
+    _text("P%d" % (slot + 1), p + Vector2(0, -32) * scale_factor, 15, Color.WHITE, HORIZONTAL_ALIGNMENT_CENTER, 58)
+
+func draw_ellipse_placeholder(center: Vector2, rx: float, ry: float, tint: Color) -> void:
+    draw_set_transform(center, 0.0, Vector2(1.0, ry / rx))
+    draw_circle(Vector2.ZERO, rx, tint)
+    draw_set_transform(Vector2.ZERO)
 
 func _draw_arena() -> void:
-    draw_rect(ARENA.grow(10), Color("12d5ef"))
-    draw_rect(ARENA, Color("30395e"))
+    _panel(ARENA.grow(10), Color("#117f9d"))
+    draw_rect(ARENA, Color("#142744"))
     for x in range(int(ARENA.position.x), int(ARENA.end.x), 48):
-        draw_line(Vector2(x, ARENA.position.y), Vector2(x, ARENA.end.y), Color("465278"), 1)
+        draw_line(Vector2(x, ARENA.position.y), Vector2(x, ARENA.end.y), Color("#25405e"), 1)
     for y in range(int(ARENA.position.y), int(ARENA.end.y), 48):
-        draw_line(Vector2(ARENA.position.x, y), Vector2(ARENA.end.x, y), Color("465278"), 1)
+        draw_line(Vector2(ARENA.position.x, y), Vector2(ARENA.end.x, y), Color("#25405e"), 1)
+    for corner in [Vector2(284, 142), Vector2(997, 142), Vector2(284, 600), Vector2(997, 600)]:
+        draw_arc(corner, 14, 0, TAU, 24, Color("#5ad7f3"), 3)
     if active_rule == 2:
-        draw_rect(Rect2(420, 235, 90, 90), Color("e95c76"))
-        draw_rect(Rect2(785, 430, 90, 90), Color("e95c76"))
-    draw_circle(ARENA.get_center(), 63, Color("1396ad"))
-    draw_circle(ARENA.get_center(), 47, Color("142c4c"))
-    _text("RULE", ARENA.get_center() + Vector2(0, 8), 25, Color("f5cf69"), HORIZONTAL_ALIGNMENT_CENTER, 100)
+        for hole in [Rect2(420, 235, 90, 90), Rect2(785, 430, 90, 90)]:
+            draw_rect(hole, Color("#481b39"))
+            draw_rect(hole.grow(-5), Color("#101323"))
+            draw_rect(hole, Color("#f46a89"), false, 4)
+    draw_circle(ARENA.get_center(), 67, Color("#146d8c"))
+    draw_circle(ARENA.get_center(), 53, Color("#0b203b"))
+    draw_arc(ARENA.get_center(), 60, visual_time, visual_time + PI * 1.45, 48, Color("#48e7eb"), 5)
+    _text("RULE", ARENA.get_center() + Vector2(0, 8), 24, Color("#ffe39d"), HORIZONTAL_ALIGNMENT_CENTER, 110)
     for orb in energy:
-        draw_circle(orb, 13, Color("ffce4a"))
-        draw_circle(orb, 6, Color("fff2b4"))
+        var glow: float = 15.0 + sin(visual_time * 4.0 + orb.x) * 2.0
+        draw_circle(orb, glow + 7.0, Color(1, 0.7, 0.15, 0.12))
+        draw_circle(orb + Vector2(0, 3), 13, Color("#b76d21"))
+        draw_circle(orb, 12, Color("#ffca4d"))
+        draw_circle(orb + Vector2(-4, -5), 5, Color("#fff5c1"))
     if not rule_card.is_empty():
-        draw_rect(Rect2(rule_card["pos"] - Vector2(20, 24), Vector2(40, 48)), Color("d07bff"))
-        _text("?", rule_card["pos"] + Vector2(0, 8), 30, Color.WHITE, HORIZONTAL_ALIGNMENT_CENTER, 40)
+        var cp: Vector2 = rule_card["pos"]
+        _panel(Rect2(cp - Vector2(20, 25), Vector2(40, 50)), Color("#9a50d9"))
+        _text("?", cp + Vector2(0, 9), 30, Color.WHITE, HORIZONTAL_ALIGNMENT_CENTER, 40)
     for id in players.keys():
         var p: Dictionary = players[id]
-        var slot: int = p["slot"]
-        var position: Vector2 = p["pos"]
-        draw_circle(position + Vector2(3, 6), 23, Color(0.05, 0.08, 0.18, 0.6))
-        draw_circle(position, 21, COLORS[slot])
-        draw_circle(position + Vector2(5, -5), 9, Color("e4f6ff"))
-        _text("P%d" % (slot + 1), position + Vector2(0, -31), 17, Color.WHITE, HORIZONTAL_ALIGNMENT_CENTER, 55)
+        _avatar(p["pos"], COLORS[int(p["slot"])], int(p["slot"]))
 
 func _draw_hud() -> void:
     for id in players.keys():
         var p: Dictionary = players[id]
         var slot: int = p["slot"]
         var x := 22.0 + slot * 245.0
-        draw_rect(Rect2(x, 15, 230, 75), COLORS[slot].darkened(0.65))
-        _text("P%d   %d pts" % [slot + 1, int(p["score"])], Vector2(x + 115, 63), 24, Color.WHITE, HORIZONTAL_ALIGNMENT_CENTER, 215)
-    _text("%02d:%02d" % [int(ceil(round_left)) / 60, int(ceil(round_left)) % 60], Vector2(1135, 66), 40, Color("ffe17a"), HORIZONTAL_ALIGNMENT_CENTER, 250)
-    draw_circle(stick_pos, 89, Color(0.24, 0.38, 0.63, 0.45))
-    draw_arc(stick_pos, 86, 0, TAU, 64, Color("7aa5ed"), 3)
-    draw_circle(stick_pos + held_direction * 46.0, 43, Color("4296ff"))
-    draw_circle(Vector2(1150, 560), 73, Color("edb544"))
-    draw_circle(Vector2(1150, 395), 62, Color("d85875"))
-    _text("LAW", Vector2(1150, 572), 27, Color("1b2036"), HORIZONTAL_ALIGNMENT_CENTER, 135)
-    _text("STEAL", Vector2(1150, 404), 24, Color.WHITE, HORIZONTAL_ALIGNMENT_CENTER, 125)
+        _panel(Rect2(x, 15, 230, 75), COLORS[slot].darkened(0.72))
+        _text("P%d  •  %d PTS" % [slot + 1, int(p["score"])], Vector2(x + 115, 62), 23, Color.WHITE, HORIZONTAL_ALIGNMENT_CENTER, 215)
+    _text("%02d:%02d" % [int(ceil(round_left)) / 60, int(ceil(round_left)) % 60], Vector2(1135, 66), 39, Color("#ffe69b"), HORIZONTAL_ALIGNMENT_CENTER, 250)
+    draw_circle(stick_pos, 91, Color(0.14, 0.29, 0.49, 0.6))
+    draw_arc(stick_pos, 86, 0, TAU, 64, Color("#5ed9ff"), 4)
+    draw_circle(stick_pos + held_direction * 46.0 + Vector2(0, 5), 44, Color("#145074"))
+    draw_circle(stick_pos + held_direction * 46.0, 40, Color("#3ac3f5"))
+    draw_circle(stick_pos + held_direction * 46.0 + Vector2(-11, -12), 14, Color("#a3f4ff"))
+    _action_disc(Vector2(1150, 560), 73, Color("#eeb64a"), "LAW")
+    _action_disc(Vector2(1150, 395), 62, Color("#ed5b88"), "STEAL")
     var my_id := multiplayer.get_unique_id()
     if players.has(my_id):
         var held: int = players[my_id]["held"]
-        _text("HELD: " + (RULE_NAMES[held] if held >= 0 else "NONE"), Vector2(25, 675), 22, Color("ffe5a1"))
-    _text("ACTIVE: " + (RULE_NAMES[active_rule] if active_rule >= 0 else "NONE"), Vector2(475, 675), 22, Color("b5edff"))
+        _text("CARD: " + (RULE_NAMES[held] if held >= 0 else "NONE"), Vector2(260, 674), 21, Color("#ffe5a1"))
+    _text("ACTIVE: " + (RULE_NAMES[active_rule] if active_rule >= 0 else "NONE"), Vector2(650, 674), 21, Color("#b5edff"))
+    _text(touch_debug, Vector2(265, 704), 13, Color("#7097b5"))
+
+func _action_disc(center: Vector2, radius: float, tint: Color, label: String) -> void:
+    draw_circle(center + Vector2(0, 8), radius, tint.darkened(0.7))
+    draw_circle(center, radius, tint)
+    draw_circle(center + Vector2(-radius * 0.25, -radius * 0.33), radius * 0.43, Color(1, 1, 1, 0.2))
+    draw_arc(center, radius - 7, PI * 1.05, PI * 1.95, 36, Color(1, 1, 1, 0.65), 4)
+    _text(label, center + Vector2(0, 10), 25, Color("#122038"), HORIZONTAL_ALIGNMENT_CENTER, int(radius * 2))
 
 func _button(rect: Rect2, label: String, color: Color) -> void:
-    draw_rect(rect, color)
-    draw_rect(rect, color.lightened(0.35), false, 3)
+    _panel(rect, color.darkened(0.32))
+    draw_rect(Rect2(rect.position + Vector2(5, 5), rect.size - Vector2(10, 15)), color)
+    draw_rect(Rect2(rect.position + Vector2(8, 7), Vector2(rect.size.x - 16, 4)), color.lightened(0.45))
     _text(label, rect.position + Vector2(rect.size.x / 2.0, rect.size.y / 2.0 + 9), 25, Color.WHITE, HORIZONTAL_ALIGNMENT_CENTER, int(rect.size.x - 12))
 
 func _text(value: String, pos: Vector2, size: int = 22, color: Color = Color.WHITE, alignment: HorizontalAlignment = HORIZONTAL_ALIGNMENT_LEFT, width: int = -1) -> void:
