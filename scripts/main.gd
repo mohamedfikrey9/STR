@@ -34,6 +34,10 @@ var stick_pos := Vector2(133, 567)
 var mouse_stick := false
 var last_winner := ""
 var random := RandomNumberGenerator.new()
+var robot_texture: Texture2D = preload("res://assets/robot.svg")
+var crystal_texture: Texture2D = preload("res://assets/crystal.svg")
+var card_texture: Texture2D = preload("res://assets/rule_card.svg")
+var arena_texture: Texture2D = preload("res://assets/arena.svg")
 var visual_time := 0.0
 var touch_debug := ""
 
@@ -462,14 +466,9 @@ func _panel(rect: Rect2, tint: Color) -> void:
 func _avatar(pos: Vector2, tint: Color, slot: int, scale_factor: float = 1.0) -> void:
     var bob := sin(visual_time * 3.5 + float(slot)) * 2.5
     var p := pos + Vector2(0, bob)
-    draw_ellipse_placeholder(p + Vector2(0, 23) * scale_factor, 27.0 * scale_factor, 10.0 * scale_factor, Color(0, 0, 0, 0.5))
-    draw_circle(p + Vector2(0, 7) * scale_factor, 24.0 * scale_factor, tint.darkened(0.6))
-    draw_circle(p, 24.0 * scale_factor, tint)
-    draw_circle(p + Vector2(-7, -9) * scale_factor, 14.0 * scale_factor, tint.lightened(0.52))
-    draw_rect(Rect2(p + Vector2(-17, -4) * scale_factor, Vector2(34, 13) * scale_factor), Color("#12253d"))
-    draw_rect(Rect2(p + Vector2(-12, -2) * scale_factor, Vector2(24, 8) * scale_factor), Color("#9ffaff"))
-    draw_circle(p + Vector2(10, -14) * scale_factor, 3.5 * scale_factor, Color.WHITE)
-    _text("P%d" % (slot + 1), p + Vector2(0, -32) * scale_factor, 15, Color.WHITE, HORIZONTAL_ALIGNMENT_CENTER, 58)
+    draw_ellipse_placeholder(p + Vector2(0, 22) * scale_factor, 25.0 * scale_factor, 9.0 * scale_factor, Color(0, 0, 0, 0.48))
+    draw_texture_rect(robot_texture, Rect2(p + Vector2(-31, -37) * scale_factor, Vector2(62, 74) * scale_factor), false, tint.lightened(0.16))
+    _text("P%d" % (slot + 1), p + Vector2(0, -40) * scale_factor, 15, Color.WHITE, HORIZONTAL_ALIGNMENT_CENTER, 58)
 
 func draw_ellipse_placeholder(center: Vector2, rx: float, ry: float, tint: Color) -> void:
     draw_set_transform(center, 0.0, Vector2(1.0, ry / rx))
@@ -477,33 +476,21 @@ func draw_ellipse_placeholder(center: Vector2, rx: float, ry: float, tint: Color
     draw_set_transform(Vector2.ZERO)
 
 func _draw_arena() -> void:
-    _panel(ARENA.grow(10), Color("#117f9d"))
-    draw_rect(ARENA, Color("#142744"))
-    for x in range(int(ARENA.position.x), int(ARENA.end.x), 48):
-        draw_line(Vector2(x, ARENA.position.y), Vector2(x, ARENA.end.y), Color("#25405e"), 1)
-    for y in range(int(ARENA.position.y), int(ARENA.end.y), 48):
-        draw_line(Vector2(ARENA.position.x, y), Vector2(ARENA.end.x, y), Color("#25405e"), 1)
-    for corner in [Vector2(284, 142), Vector2(997, 142), Vector2(284, 600), Vector2(997, 600)]:
-        draw_arc(corner, 14, 0, TAU, 24, Color("#5ad7f3"), 3)
+    draw_texture_rect(arena_texture, ARENA.grow(10), false)
     if active_rule == 2:
         for hole in [Rect2(420, 235, 90, 90), Rect2(785, 430, 90, 90)]:
             draw_rect(hole, Color("#481b39"))
             draw_rect(hole.grow(-5), Color("#101323"))
             draw_rect(hole, Color("#f46a89"), false, 4)
-    draw_circle(ARENA.get_center(), 67, Color("#146d8c"))
-    draw_circle(ARENA.get_center(), 53, Color("#0b203b"))
     draw_arc(ARENA.get_center(), 60, visual_time, visual_time + PI * 1.45, 48, Color("#48e7eb"), 5)
     _text("RULE", ARENA.get_center() + Vector2(0, 8), 24, Color("#ffe39d"), HORIZONTAL_ALIGNMENT_CENTER, 110)
     for orb in energy:
-        var glow: float = 15.0 + sin(visual_time * 4.0 + orb.x) * 2.0
-        draw_circle(orb, glow + 7.0, Color(1, 0.7, 0.15, 0.12))
-        draw_circle(orb + Vector2(0, 3), 13, Color("#b76d21"))
-        draw_circle(orb, 12, Color("#ffca4d"))
-        draw_circle(orb + Vector2(-4, -5), 5, Color("#fff5c1"))
+        var glow: float = 18.0 + sin(visual_time * 4.0 + orb.x) * 2.0
+        draw_circle(orb, glow + 6.0, Color(1, 0.7, 0.15, 0.11))
+        draw_texture_rect(crystal_texture, Rect2(orb - Vector2(16, 19), Vector2(32, 38)), false)
     if not rule_card.is_empty():
         var cp: Vector2 = rule_card["pos"]
-        _panel(Rect2(cp - Vector2(20, 25), Vector2(40, 50)), Color("#9a50d9"))
-        _text("?", cp + Vector2(0, 9), 30, Color.WHITE, HORIZONTAL_ALIGNMENT_CENTER, 40)
+        draw_texture_rect(card_texture, Rect2(cp - Vector2(23, 30), Vector2(46, 60)), false)
     for id in players.keys():
         var p: Dictionary = players[id]
         _avatar(p["pos"], COLORS[int(p["slot"])], int(p["slot"]))
