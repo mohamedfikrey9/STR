@@ -86,6 +86,24 @@ jobs:
           print('Configured Godot Android SDK and Java paths')
           PY
 
+      - name: Configure signing in export preset
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import os
+          from pathlib import Path
+          p = Path('export_presets.cfg')
+          s = p.read_text()
+          keystore = str(Path.home() / '.android/debug.keystore')
+          assert Path(keystore).is_file(), 'Debug keystore missing'
+          s = s.replace('keystore/debug=""', 'keystore/debug="' + keystore + '"')
+          s = s.replace('keystore/debug_user=""', 'keystore/debug_user="androiddebugkey"')
+          s = s.replace('keystore/debug_password=""', 'keystore/debug_password="android"')
+          p.write_text(s)
+          PY
+          godot --headless --path . --editor --quit
+
       - name: Validate Android export preset
         shell: bash
         run: |
@@ -99,7 +117,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          godot --headless --path . --export-debug "Android" "build/StealTheRule.apk"
+          godot --headless --verbose --path . --export-debug "Android" "build/StealTheRule.apk"
 
       - name: Verify APK
         shell: bash
