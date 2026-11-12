@@ -47,6 +47,7 @@ func _ready() -> void:
     # Keep Android landscape and avoid desktop minimum-size constraints.
     if not OS.has_feature("mobile"):
         get_window().min_size = Vector2i(960, 540)
+    get_viewport().size_changed.connect(queue_redraw)
     ip_edit = LineEdit.new()
     ip_edit.position = Vector2(470, 537)
     ip_edit.size = Vector2(340, 42)
@@ -339,6 +340,7 @@ func _action(action: String) -> void:
         _steal(multiplayer.get_unique_id())
 
 func _input(event: InputEvent) -> void:
+    var canvas_pos := get_global_transform_with_canvas().affine_inverse() * event.position if event is InputEventScreenTouch or event is InputEventScreenDrag or event is InputEventMouseButton or event is InputEventMouseMotion else Vector2.ZERO
     if event is InputEventKey and event.pressed and not event.echo:
         if editing_ip:
             if event.keycode == KEY_ENTER:
@@ -354,15 +356,15 @@ func _input(event: InputEvent) -> void:
             _action("steal")
     if event is InputEventScreenTouch:
         if event.pressed:
-            _touch_down(event.position, event.index)
+            _touch_down(canvas_pos, event.index)
         elif event.index == stick_pointer:
             stick_pointer = -1
             held_direction = Vector2.ZERO
     if event is InputEventScreenDrag and event.index == stick_pointer:
-        held_direction = (event.position - stick_pos).limit_length(70.0) / 70.0
+        held_direction = (canvas_pos - stick_pos).limit_length(70.0) / 70.0
     if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT and not OS.has_feature("mobile"):
         if event.pressed:
-            _touch_down(event.position, -2)
+            _touch_down(canvas_pos, -2)
             mouse_stick = stick_pointer == -2
         else:
             mouse_stick = false
@@ -414,6 +416,7 @@ func _physics_process(_delta: float) -> void:
     held_direction = Input.get_vector("ui_left", "ui_right", "ui_up", "ui_down")
 
 func _draw() -> void:
+    draw_set_transform(Vector2.ZERO)
     draw_rect(Rect2(0, 0, 1280, 720), Color("#080e20"))
     for i in range(20):
         var x := float(i * 131 % 1280)
